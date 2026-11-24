@@ -43,7 +43,7 @@ public func readBattery() throws(SystemError) -> Reading {
       let percent = description[kIOPSCurrentCapacityKey] as? Int,
       let charging = description[kIOPSIsChargingKey] as? Bool
     else { continue }
-    let temperature = bg_battery_temp_c()
+    let temperature = eighty_battery_temp_c()
     return Reading(percent: percent, charging: charging, temperature: temperature.isNaN ? nil : temperature)
   }
   throw SystemError(description: "no internal battery found")
@@ -53,7 +53,7 @@ public func readBattery() throws(SystemError) -> Reading {
 public func readNativeLimit() throws(SystemError) -> Int? {
   var limit: Int32 = 0
   var enabled: Int32 = 0
-  try check { bg_limit_read(&limit, &enabled, $0, $1) }
+  try check { eighty_limit_read(&limit, &enabled, $0, $1) }
   return enabled != 0 ? Int(limit) : nil
 }
 
@@ -61,11 +61,11 @@ public func readNativeLimit() throws(SystemError) -> Int? {
 public func applyNativeLimit(_ target: Int) throws(SystemError) {
   let current = try readNativeLimit()
   if target == 100 {
-    if current != nil { try check { bg_limit_disable($0, $1) } }
+    if current != nil { try check { eighty_limit_disable($0, $1) } }
     return
   }
   if current == target { return }
-  try check { bg_limit_set_exact(Int32(target), $0, $1) }
+  try check { eighty_limit_set_exact(Int32(target), $0, $1) }
 }
 
 /// Targets powerd is enforcing right now. The agent can accept a new target a
@@ -81,6 +81,13 @@ public func registeredLimits() -> [Int] {
 public func loadConfig() throws -> Config {
   guard let data = FileManager.default.contents(atPath: Paths.config) else { return .standard }
   return try Config.decode(data)
+}
+
+/// Validates and saves the config, then wakes the daemon so it applies it at once.
+/// The config file is writable by admin users, so this needs no sudo.
+public func saveConfig(_ config: Config) throws {
+  try config.validated().encoded().write(to: URL(fileURLWithPath: Paths.config), options: .atomic)
+  notify_post(Paths.configChanged)
 }
 
 /// Runs a program and returns its trimmed standard output, or nil if it can't start.

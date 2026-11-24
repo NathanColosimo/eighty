@@ -25,10 +25,7 @@ struct Panel: View {
     }
     .padding(16)
     .frame(width: 290)
-    .onAppear {
-      model.refresh()
-      model.checkDaemon()
-    }
+    .onAppear(perform: model.refresh)
   }
 
   private var header: some View {
@@ -54,23 +51,18 @@ struct Panel: View {
   }
 
   @ViewBuilder private var setup: some View {
-    switch model.daemon {
-    case .current:
-      if let problem = model.health.problem {
-        setupCard(title: "Eighty isn't working", detail: problem, action: "Restart Background Service", tint: .red)
-      }
-    case .missing:
+    if model.health == .notInstalled {
       setupCard(
         title: "One more step",
         detail: "Eighty needs a small background service to control charging. macOS will ask for your password once.",
         action: "Install Background Service")
-    case .outdated where model.needsManualUpdate:
+    } else if model.needsManualUpdate {
       setupCard(
         title: "Update the background service",
         detail: "It doesn't match this version of Eighty (\(eightyVersion)). macOS will ask for your password.",
         action: "Update Background Service")
-    case .outdated:
-      EmptyView()
+    } else if let problem = model.health.problem {
+      setupCard(title: "Eighty isn't working", detail: problem, action: "Restart Background Service", tint: .red)
     }
   }
 

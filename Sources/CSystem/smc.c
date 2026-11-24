@@ -55,7 +55,7 @@ static double readFloatKey(const char *name) {
   return value;
 }
 
-double bg_battery_temp_c(void) {
+double eighty_battery_temp_c(void) {
   if (smcOpen() != 0) return NAN;
   static const char *keys[] = {"TB0T", "TB1T", "TB2T"};
   double hottest = NAN;

@@ -53,7 +53,7 @@ func uninstall() {
   do {
     try applyNativeLimit(limit)
   } catch {
-    warn("could not reset the charge limit to \(limit)%: \(error)")
+    FileHandle.standardError.write(Data("eighty: could not reset the charge limit to \(limit)%: \(error)\n".utf8))
   }
   for path in [Paths.plist, Paths.daemonBinary, Paths.supportDir, Paths.logDir] {
     try? FileManager.default.removeItem(atPath: path)

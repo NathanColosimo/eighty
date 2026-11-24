@@ -23,30 +23,23 @@ public enum Health: Equatable, Sendable {
     }
   }
 
-  public static func check(now: Date = Date()) -> Health {
-    guard FileManager.default.fileExists(atPath: Paths.plist) else { return .notInstalled }
-    let last = History.lastRow()
-    let lastDate = last.flatMap { ISO8601DateFormatter().date(from: $0.time) }
-    // A sample after the error means the daemon recovered. Samples carry whole
-    // seconds, so an error earlier in the same second as a sample doesn't count.
-    if let error = lastError(), error.date.timeIntervalSince(lastDate ?? .distantPast) >= 1 {
-      return .failing(error.message)
-    }
-    guard let lastDate, now.timeIntervalSince(lastDate) < staleAfter else {
-      return .notResponding(lastSample: last?.time)
-    }
-    return .ok
+  public static func check() -> Health {
+    evaluate(
+      installed: FileManager.default.fileExists(atPath: Paths.plist),
+      lastSample: History.lastRow(), lastError: ErrorLog.last(), now: Date())
   }
 
-  /// The newest line of the daemon's error log, stamped with the log's modification time.
-  private static func lastError() -> (date: Date, message: String)? {
-    guard
-      let date = (try? FileManager.default.attributesOfItem(atPath: Paths.errors))?[.modificationDate] as? Date,
-      let text = try? String(contentsOfFile: Paths.errors, encoding: .utf8),
-      let line = text.split(separator: "\n").last
-    else { return nil }
-    // Lines start with Date().description: "2026-11-24 20:59:00 +0000 message".
-    let message = line.split(separator: " ", maxSplits: 3).dropFirst(3).first.map(String.init) ?? String(line)
-    return (date, message)
+  static func evaluate(installed: Bool, lastSample: History.Row?, lastError: (date: Date, message: String)?, now: Date) -> Health {
+    guard installed else { return .notInstalled }
+    let sampled = lastSample.flatMap { ISO8601DateFormatter().date(from: $0.time) }
+    // A sample after the error means the daemon recovered. Samples carry whole
+    // seconds, so an error earlier in the same second as a sample doesn't count.
+    if let lastError, lastError.date.timeIntervalSince(sampled ?? .distantPast) >= 1 {
+      return .failing(lastError.message)
+    }
+    guard let sampled, now.timeIntervalSince(sampled) < staleAfter else {
+      return .notResponding(lastSample: lastSample?.time)
+    }
+    return .ok
   }
 }

@@ -35,7 +35,8 @@ let commands: [Command] = [
     name: "limit", usage: "limit <10-100>",
     summary: "Set the charge limit (100 = off)",
     details: """
-      Stops charging at this percentage. Takes effect within about a minute.
+      Stops charging at this percentage. Eighty applies it within seconds; while
+      charging, macOS can take a few minutes to enforce it.
       Above the limit, macOS runs the Mac from the battery until it drops to the limit.
       Example: eighty limit 80
       """,
@@ -68,8 +69,8 @@ let commands: [Command] = [
     summary: "Install and start the background daemon (needs sudo)",
     details: """
       Copies this binary to \(Paths.daemonBinary) and starts a launchd daemon that
-      runs at boot. Run it again after upgrading. Settings are kept.
-      The menu bar app has a button that does the same.
+      runs at boot. Settings are kept. Signed releases then update themselves after
+      `brew upgrade`. The menu bar app has a button that does the same.
       Example: sudo eighty install
       """,
     run: { _ in install() }),
@@ -208,4 +209,9 @@ func format(_ value: Double) -> String {
 
 func nullable(_ value: Any?) -> Any {
   value ?? NSNull()
+}
+
+func fail(_ message: String) -> Never {
+  FileHandle.standardError.write(Data("eighty: \(message)\n".utf8))
+  exit(1)
 }

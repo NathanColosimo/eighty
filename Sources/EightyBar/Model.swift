@@ -4,19 +4,14 @@ import Foundation
 import Observation
 import ServiceManagement
 
-enum DaemonState: Equatable {
-  case missing
-  case outdated
-  case current
-}
-
 @MainActor @Observable
 final class Model {
   private(set) var reading: Reading?
   private(set) var config = Config.standard
   private(set) var mode = Mode.limiting
-  private(set) var daemon = DaemonState.missing
   private(set) var health = Health.ok
+  /// The installed daemon's version, nil when it can't be read.
+  private(set) var daemonVersion: String?
   private(set) var error: String?
 
   /// When the daemon was first seen out of date. A signed daemon updates itself
@@ -27,7 +22,6 @@ final class Model {
 
   init() {
     refresh()
-    checkDaemon()
     timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
       MainActor.assumeIsolated { self?.refresh() }
     }
@@ -42,19 +36,11 @@ final class Model {
     }
     mode = History.lastRow()?.mode ?? .limiting
     health = Health.check()
-    // Notice an install or upgrade done from the CLI or Homebrew. Spawns a
-    // process, so only while the service needs attention.
-    if daemon != .current || health == .notInstalled { checkDaemon() }
-  }
-
-  /// Compares the installed daemon's version with this app's.
-  func checkDaemon() {
-    guard FileManager.default.fileExists(atPath: Paths.plist) else {
-      daemon = .missing
-      return
+    // Reading the version starts a process, so only until it matches this app.
+    if daemonVersion != eightyVersion {
+      daemonVersion = output(of: Paths.daemonBinary, "version")
+      outdatedSince = daemonVersion == eightyVersion ? nil : outdatedSince ?? Date()
     }
-    daemon = output(of: Paths.daemonBinary, "version") == eightyVersion ? .current : .outdated
-    outdatedSince = daemon == .outdated ? outdatedSince ?? Date() : nil
   }
 
   /// Runs the bundled CLI's `install` as root, behind the standard macOS password dialog.
@@ -74,13 +60,13 @@ final class Model {
     } else if failure == nil {
       error = nil
     }
-    checkDaemon()
     refresh()
   }
 
-  /// The daemon is out of date and didn't update itself (an older or unsigned build).
+  /// The daemon is installed but out of date, and hasn't updated itself within a
+  /// few minutes (an unsigned build, or one from before self-update).
   var needsManualUpdate: Bool {
-    guard daemon == .outdated, let outdatedSince else { return false }
+    guard health != .notInstalled, daemonVersion != eightyVersion, let outdatedSince else { return false }
     return Date().timeIntervalSince(outdatedSince) > 180
   }
 
