@@ -10,32 +10,25 @@
 </p>
 
 <p align="center">
-  <img src="docs/battery-wear.png" alt="Heat and charging to 100% are what wear out a plugged-in battery. Eighty stops charging at 80% and pauses charging while the battery is hot.">
+  <img src="docs/battery-wear.png" alt="Heat and charging to 100% wear out a plugged-in battery. Eighty stops charging at 80% and pauses charging while the battery is hot.">
   <br>
-  <sub>Numbers: <a href="https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries">Battery University BU-808</a>, tables 3 and 4. Estimates for typical Li-ion cells; real batteries vary.</sub>
+  <sub>Source: <a href="https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries">Battery University BU-808</a> (estimates; real batteries vary)</sub>
 </p>
 
-## Why
+A Mac that lives on its charger keeps its battery full and often warm, the two
+things that wear it out fastest. Eighty fixes both, from a small menu bar app:
 
-A Mac that sits on its charger all day keeps its battery full and often warm.
-Those are the two things that wear a battery out fastest. Eighty fixes both:
-
-- **Charge limit.** Charging stops at 80% (or any limit you pick), and the Mac runs
-  straight from the charger.
-- **Heat pause.** If the battery gets hot while charging (35 °C by default),
-  charging pauses until it cools down.
-
-Heat protection is usually a paid feature. Eighty is free and open source.
+- **Charge limit:** charging stops at 80% (or your pick) and the Mac runs from the charger.
+- **Heat pause:** if the battery gets hot while charging, charging waits until it cools.
 
 | | Charge limit | Heat pause | Price |
 |---|:-:|:-:|---|
-| **Eighty** | ✅ | ✅ | Free |
-| AlDente | ✅ | Pro only | €23.99 for Pro |
+| **Eighty** | ✅ | ✅ | **Free, open source** |
+| AlDente | ✅ | Pro only | €23.99 |
 | BatFi | ✅ | ✅ | $15 |
-| batt, battery | ✅ | — | Free |
-| macOS built-in | 80–95% steps | — | Free |
+| macOS built-in | 80–95% | — | Free |
 
-Needs an Apple silicon MacBook on **macOS 27** or later.
+Requires an Apple silicon MacBook on macOS 27 or later.
 
 ## Install
 
@@ -43,55 +36,37 @@ Needs an Apple silicon MacBook on **macOS 27** or later.
 brew install --cask nathancolosimo/tap/eighty
 ```
 
-1. Open **Eighty** from Applications. A shield appears in the menu bar.
-2. Click it, then **Install Background Service**. macOS asks for your password once.
-
-That's it. Eighty starts with your Mac from then on.
-
-To update: `brew upgrade --cask eighty`. The background service updates itself
-within a minute, with no password.
+Open **Eighty**, click the shield in the menu bar, then **Install Background Service**.
+macOS asks for your password once. To update, run `brew upgrade --cask eighty`;
+the background service updates itself.
 
 ## Use
 
-Click the menu bar icon to:
+Click the menu bar icon to set the charge limit and the heat pause.
 
-- see battery %, temperature, and what Eighty is doing,
-- set the charge limit (slider, or 80% / 90% / Full),
-- turn the heat pause on or off, and set its temperature.
-
-| Menu bar | Means |
+| Icon | Means |
 |---|---|
 | 🛡 80 | Charging stops at 80% |
 | 🛡 | No limit |
-| 🌡 63 | Paused for heat, holding at 63% |
-| ⚠️ shield | Something is wrong. Open the menu for details and a fix. |
+| 🌡 63 | Paused for heat at 63% |
+| ⚠️ | Not working; open the menu to fix it |
 
-Before a trip, click **Full** to charge to 100%. Set it back to 80% when you're home.
+Going on a trip? Click **Full** to charge to 100%, and **80%** when you're back.
 
 ## For AI agents and scripts
 
-Everything in the app is also in the `eighty` command, which the cask puts on your PATH.
+The `eighty` command does everything the app does. No sudo except `install` and `uninstall`.
 
 ```sh
-brew install --cask nathancolosimo/tap/eighty
-sudo eighty install          # start the background service (once)
-eighty status --json         # read state
-eighty limit 80              # charge limit, 10-100 (100 = off)
-eighty heat 35 32            # pause at 35 °C, resume at 32 °C
-eighty heat off
-eighty history 60            # last 60 minutes as CSV
-eighty help                  # all commands; `eighty help <command>` for details
+sudo eighty install      # once, if the app hasn't installed the service
+eighty status --json     # state as JSON; "problem" is null when healthy
+eighty limit 80          # 10-100, 100 = no limit
+eighty heat 35 32        # pause at 35 °C, resume at 32 °C (or: eighty heat off)
+eighty history 60        # last hour, one CSV row per minute
+eighty help [command]    # full reference
 ```
 
-- Only `install` and `uninstall` need sudo. Other changes apply within seconds.
-- Exit code 0 on success, 1 on error, with the error on stderr.
-- `status --json` returns one object; `problem` is `null` when healthy:
-
-```json
-{"battery":{"percent":79,"charging":true,"temperatureC":31.2},"limit":80,
- "heat":{"pauseAt":35,"resumeAt":32},"macosTarget":80,"enforcing":[80],
- "problem":null,"daemon":{"installed":true,"mode":"limit","lastSample":"2026-11-24T18:24:29-05:00"}}
-```
+Exit code 0 on success, 1 on error (message on stderr).
 
 ## Uninstall
 
@@ -99,45 +74,28 @@ eighty help                  # all commands; `eighty help <command>` for details
 brew uninstall --zap --cask eighty
 ```
 
-`--zap` also stops and removes the background service (macOS asks for your
-password). macOS keeps a plain charge limit at your last setting; change it in
-System Settings → Battery. A plain `brew uninstall` removes only the app and leaves
-the service running.
-
 ## Good to know
 
-- **Don't combine it with other limiters** (AlDente, batt, or the System Settings
-  charge slider). They all set the same macOS limit and will fight.
-- **Above the limit, macOS runs the Mac from the battery** until it drops to the
-  limit, even while plugged in.
-- **macOS updates can break it.** Eighty uses private macOS interfaces; the menu
-  bar shows a warning if it stops working.
-- **Releases are signed and notarized by Apple**, and each zip's build provenance
-  can be checked with
-  `gh attestation verify Eighty-<version>.zip --repo NathanColosimo/eighty`.
+- **Use one limiter.** AlDente, batt, and the System Settings charge slider set the
+  same macOS limit as Eighty and will fight it.
+- **Above the limit, the battery drains to it** even while plugged in. That's macOS
+  doing what it should.
+- **It relies on private macOS interfaces**, so a macOS update could break it. If
+  that happens, the menu bar icon turns into a warning.
 
 ## How it works
 
-The background service runs as root, wakes once a minute, and sets macOS's own
-built-in charge limit, including exact targets the System Settings slider doesn't
-offer. It reads battery temperature from the SMC sensors. If the battery is charging
-and too hot, it sets the limit to the current percentage so charging stops there,
-and restores your limit once the battery cools. The app and CLI change settings in
-`/Library/Application Support/eighty/config.json`; history and errors go to
-`/Library/Logs/eighty/`.
+A small background service runs as root, wakes once a minute, and sets macOS's own
+charge limit. When the battery is charging and hot, it sets the limit to the
+current percentage so charging stops, then restores it once the battery cools.
+Releases are signed and notarized by Apple.
 
-## Build from source
+## Development
 
 ```sh
-git clone https://github.com/NathanColosimo/eighty && cd eighty
 swift test
-scripts/build-app.sh --install    # builds Eighty.app into /Applications
+scripts/build-app.sh --install    # build Eighty.app into /Applications
 ```
 
-Releases: see [docs/RELEASING.md](docs/RELEASING.md). Security reports: see
-[SECURITY.md](SECURITY.md).
-
-## License
-
-[MIT](LICENSE). Charge-limit approach based on
-[batt](https://github.com/charlie0129/batt)'s macOS 27 backend.
+[Releasing](docs/RELEASING.md) · [Security](SECURITY.md) · [MIT License](LICENSE) ·
+Charge-limit approach from [batt](https://github.com/charlie0129/batt).
