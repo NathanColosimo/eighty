@@ -19,6 +19,10 @@ final class Model {
   private(set) var health = Health.ok
   private(set) var error: String?
 
+  /// When the daemon was first seen out of date. A signed daemon updates itself
+  /// within about a minute of an upgrade, so the app only asks after a grace period.
+  private var outdatedSince: Date?
+
   private var timer: Timer?
 
   init() {
@@ -50,6 +54,7 @@ final class Model {
       return
     }
     daemon = output(of: Paths.daemonBinary, "version") == eightyVersion ? .current : .outdated
+    outdatedSince = daemon == .outdated ? outdatedSince ?? Date() : nil
   }
 
   /// Runs the bundled CLI's `install` as root, behind the standard macOS password dialog.
@@ -71,6 +76,12 @@ final class Model {
     }
     checkDaemon()
     refresh()
+  }
+
+  /// The daemon is out of date and didn't update itself (an older or unsigned build).
+  var needsManualUpdate: Bool {
+    guard daemon == .outdated, let outdatedSince else { return false }
+    return Date().timeIntervalSince(outdatedSince) > 180
   }
 
   /// The percentage charging stops at right now.
@@ -114,16 +125,4 @@ final class Model {
       }
     }
   }
-}
-
-private func output(of executable: String, _ arguments: String...) -> String? {
-  let pipe = Pipe()
-  let process = Process()
-  process.executableURL = URL(fileURLWithPath: executable)
-  process.arguments = arguments
-  process.standardOutput = pipe
-  guard (try? process.run()) != nil else { return nil }
-  let data = pipe.fileHandleForReading.readDataToEndOfFile()
-  process.waitUntilExit()
-  return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
 }

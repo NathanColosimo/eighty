@@ -13,8 +13,10 @@ func runDaemon() -> Never {
 
   var mode = Mode.limiting
   var config = Config.standard
+  var updater = SelfUpdater()
 
   func tick() {
+    updater?.updateIfAppIsNewer()
     do {
       config = try loadConfig()
     } catch {
