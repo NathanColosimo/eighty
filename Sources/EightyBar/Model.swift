@@ -38,10 +38,12 @@ final class Model {
     }
     mode = History.lastRow()?.mode ?? .limiting
     health = Health.check()
+    // Notice an install or upgrade done from the CLI or Homebrew. Spawns a
+    // process, so only while the service needs attention.
+    if daemon != .current || health == .notInstalled { checkDaemon() }
   }
 
-  /// Compares the installed daemon's version with this app's. Spawns a process,
-  /// so it runs on launch, when the panel opens, and after an install.
+  /// Compares the installed daemon's version with this app's.
   func checkDaemon() {
     guard FileManager.default.fileExists(atPath: Paths.plist) else {
       daemon = .missing

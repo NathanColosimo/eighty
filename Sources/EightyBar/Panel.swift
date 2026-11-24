@@ -90,6 +90,7 @@ struct Panel: View {
   }
 
   private var stateLine: String {
+    if model.health != .ok { return "Not active" }
     if model.mode.isHeatPause { return "Paused for heat at \(model.target)%" }
     if model.reading?.charging == true { return "Charging to \(model.config.limit)%" }
     if model.config.limit == 100 { return "No limit" }

@@ -10,7 +10,7 @@ struct EightyBarApp: App {
     MenuBarExtra {
       Panel(model: model)
     } label: {
-      Image(nsImage: menuBarIcon(limit: model.config.limit, mode: model.mode, healthy: model.daemon == .current && model.health == .ok))
+      Image(nsImage: menuBarIcon(limit: model.config.limit, mode: model.mode, healthy: model.health == .ok))
     }
     .menuBarExtraStyle(.window)
   }
@@ -19,7 +19,7 @@ struct EightyBarApp: App {
 /// A shield with a bolt and the charge limit ("protected charging, up to 80"),
 /// drawn unlike a battery so it can't be mistaken for the current charge. While
 /// paused for heat, a thermometer and the held percentage. With no limit, the
-/// shield alone. A warning shield when the background service needs attention.
+/// shield alone. A warning shield when the background service isn't working.
 /// Template, so it follows the menu bar's colour.
 @MainActor func menuBarIcon(limit: Int, mode: Mode, healthy: Bool) -> NSImage {
   let symbolName: String
