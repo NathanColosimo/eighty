@@ -12,8 +12,8 @@
      [NathanColosimo/homebrew-tap](https://github.com/NathanColosimo/homebrew-tap)
      with the new version, checksum, and minimum macOS.
 
-Users then get it with `brew upgrade --cask eighty`, and the menu bar app offers to
-update the background service.
+Users then get it with `brew upgrade --cask eighty`. Upgrades leave the running
+background service alone, and the menu bar app offers to update it.
 
 Check a downloaded zip came from this repo's workflow:
 `gh attestation verify Eighty-<version>.zip --repo NathanColosimo/eighty`
