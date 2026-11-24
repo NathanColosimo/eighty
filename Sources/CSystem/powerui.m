@@ -36,7 +36,7 @@ static id client(void) {
   return instance;
 }
 
-int bg_limit_read(int *limit, int *enabled, char *err, int errlen) {
+int eighty_limit_read(int *limit, int *enabled, char *err, int errlen) {
   @autoreleasepool {
     id c = client();
     if (!c) return fail(err, errlen, @"macOS charge-limit service is unavailable");
@@ -60,19 +60,19 @@ static int callBool(const char *selector, char *err, int errlen) {
   return 0;
 }
 
-int bg_limit_disable(char *err, int errlen) {
+int eighty_limit_disable(char *err, int errlen) {
   @autoreleasepool {
     return callBool("disableMCL:", err, errlen);
   }
 }
 
-int bg_limit_set_exact(int limit, char *err, int errlen) {
+int eighty_limit_set_exact(int limit, char *err, int errlen) {
   @autoreleasepool {
     if (limit < 10 || limit > 99) return fail(err, errlen, @"exact target must be 10-99");
     if (geteuid() != 0) return fail(err, errlen, @"setting an exact charge target needs root");
 
     int current = 0, enabled = 0;
-    if (bg_limit_read(&current, &enabled, err, errlen) != 0) return -1;
+    if (eighty_limit_read(&current, &enabled, err, errlen) != 0) return -1;
     // enableMCL resets the target to Apple's 80% default; the preference
     // reload below replaces it.
     if (!enabled && callBool("enableMCL:", err, errlen) != 0) return -1;

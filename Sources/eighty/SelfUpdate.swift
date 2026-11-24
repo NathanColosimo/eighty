@@ -48,7 +48,7 @@ struct SelfUpdater {
     } catch {
       try? manager.removeItem(atPath: staged)
       rejected = version
-      warn("not updating to \(version): \(error)")
+      ErrorLog.write("not updating to \(version): \(error)")
       return
     }
     exit(0)

@@ -14,6 +14,6 @@ let package = Package(
     .target(name: "EightyKit", dependencies: ["CSystem", "EightyCore"]),
     .executableTarget(name: "eighty", dependencies: ["CSystem", "EightyCore", "EightyKit"]),
     .executableTarget(name: "EightyBar", dependencies: ["EightyCore", "EightyKit"]),
-    .testTarget(name: "EightyCoreTests", dependencies: ["EightyCore"]),
+    .testTarget(name: "EightyTests", dependencies: ["EightyCore", "EightyKit"]),
   ]
 )

@@ -17,6 +17,10 @@ public enum Mode: Equatable, Sendable {
   case limiting
   /// Charging paused for heat, holding the battery at this percentage.
   case heatPaused(at: Int)
+
+  public var isHeatPause: Bool {
+    if case .heatPaused = self { true } else { false }
+  }
 }
 
 /// Decides the next mode. Heat only matters while charging: a battery that is
