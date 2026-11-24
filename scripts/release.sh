@@ -52,12 +52,6 @@ cask "eighty" do
   app "Eighty.app"
   binary "#{appdir}/Eighty.app/Contents/Helpers/eighty"
 
-  # The app is ad-hoc signed, not notarized, so clear the download quarantine.
-  # The declarative postflight_steps that brew style prefers have no xattr step.
-  postflight do
-    system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Eighty.app"]
-  end
-
   # Homebrew runs uninstall directives on every upgrade too, so the background
   # service (its own root-owned copy, unaffected by upgrades) is removed only by
   # zap. After an upgrade the app offers to update the service.

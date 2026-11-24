@@ -1,8 +1,11 @@
 #!/bin/sh
 # Builds Eighty.app (menu bar app with the eighty CLI inside) into .build/.
 #   scripts/build-app.sh            build only
-#   scripts/build-app.sh --zip      also zip it for a release: .build/Eighty-<version>.zip
+#   scripts/build-app.sh --zip      also zip it: .build/Eighty-<version>.zip
 #   scripts/build-app.sh --install  also copy it to /Applications and open it
+# Signs ad hoc unless EIGHTY_SIGN_IDENTITY names a certificate (EIGHTY_KEYCHAIN
+# optionally says which keychain holds it). Releases sign with DEVELOPER_ID from
+# scripts/release.env, then scripts/notarize.sh notarizes the result.
 set -eu
 cd "$(dirname "$0")/.."
 . scripts/release.env
@@ -46,9 +49,18 @@ cat > "$app/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc signatures: inside first, then the app.
-codesign --force --sign - "$app/Contents/Helpers/eighty"
-codesign --force --sign - "$app"
+# Inside first, then the app. A real identity also gets the hardened runtime
+# and a secure timestamp, which notarization requires.
+identity=${EIGHTY_SIGN_IDENTITY:--}
+sign() {
+  if [ "$identity" = - ]; then
+    codesign --force --sign - "$1"
+  else
+    codesign --force --options runtime --timestamp --sign "$identity" ${EIGHTY_KEYCHAIN:+--keychain "$EIGHTY_KEYCHAIN"} "$1"
+  fi
+}
+sign "$app/Contents/Helpers/eighty"
+sign "$app"
 echo "Built $app ($version)"
 
 case "${1:-}" in

@@ -109,9 +109,8 @@ the service running.
   limit, even while plugged in.
 - **macOS updates can break it.** Eighty uses private macOS interfaces; the menu
   bar shows a warning if it stops working.
-- **The app isn't notarized** (that needs a paid Apple developer account). The
-  Homebrew cask clears the download quarantine so it opens normally. Each release's
-  build provenance can be checked with
+- **Releases are signed and notarized by Apple**, and each zip's build provenance
+  can be checked with
   `gh attestation verify Eighty-<version>.zip --repo NathanColosimo/eighty`.
 
 ## How it works
