@@ -93,11 +93,13 @@ eighty help                  # all commands; `eighty help <command>` for details
 ## Uninstall
 
 ```sh
-brew uninstall --cask eighty
+brew uninstall --zap --cask eighty
 ```
 
-This stops the background service and removes it. macOS keeps a plain charge limit
-at your last setting; change it in System Settings → Battery.
+`--zap` also stops and removes the background service (macOS asks for your
+password). macOS keeps a plain charge limit at your last setting; change it in
+System Settings → Battery. A plain `brew uninstall` removes only the app and leaves
+the service running.
 
 ## Good to know
 

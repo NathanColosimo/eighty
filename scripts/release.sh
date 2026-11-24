@@ -57,17 +57,25 @@ cask "eighty" do
     system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Eighty.app"]
   end
 
-  # Stops the background service and leaves macOS's plain charge limit in place.
-  uninstall quit:   "dev.eighty.menubar",
-            script: {
-              executable: "#{appdir}/Eighty.app/Contents/Helpers/eighty",
-              args:       ["uninstall"],
-              sudo:       true,
-            }
+  # Homebrew runs uninstall directives on every upgrade too, so the background
+  # service (its own root-owned copy, unaffected by upgrades) is removed only by
+  # zap. After an upgrade the app offers to update the service.
+  uninstall quit: "dev.eighty.menubar"
+
+  zap script: {
+        executable:   "/Library/PrivilegedHelperTools/dev.eighty",
+        args:         ["uninstall"],
+        sudo:         true,
+        must_succeed: false,
+      },
+      trash:  "~/Library/Preferences/dev.eighty.menubar.plist"
 
   caveats <<~EOS
     Open Eighty from Applications, then click its menu bar icon and choose
     "Install Background Service". Or, from a terminal: sudo eighty install
+
+    To remove the background service when uninstalling, use:
+      brew uninstall --zap --cask eighty
   EOS
 end
 CASK
