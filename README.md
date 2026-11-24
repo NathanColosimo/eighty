@@ -44,12 +44,12 @@ the background service updates itself.
 
 Click the menu bar icon to set the charge limit and the heat pause.
 
-| Icon | Means |
+| Menu bar shows | Means |
 |---|---|
-| 🛡 80 | Charging stops at 80% |
-| 🛡 | No limit |
-| 🌡 63 | Paused for heat at 63% |
-| ⚠️ | Not working; open the menu to fix it |
+| Shield and **80** | Charging stops at 80% |
+| Shield only | No limit |
+| Thermometer and **63** | Paused for heat at 63% |
+| Shield with **!** | Not working; open the menu to fix it |
 
 Going on a trip? Click **Full** to charge to 100%, and **80%** when you're back.
 
