@@ -25,12 +25,13 @@ until gh release view "$tag" --repo "$repo" --json assets --jq '.assets[].name' 
   sleep 15
 done
 
-sha=$(gh release download "$tag" --repo "$repo" --pattern "Eighty-$version.zip" --output - | shasum -a 256 | cut -d' ' -f1)
-
 work=$(mktemp -d)
-gh repo clone "$tap" "$work" -- --quiet
-mkdir -p "$work/Casks"
-cat > "$work/Casks/eighty.rb" <<CASK
+gh release download "$tag" --repo "$repo" --pattern "Eighty-$version.zip" --dir "$work"
+sha=$(shasum -a 256 "$work/Eighty-$version.zip" | cut -d' ' -f1)
+
+gh repo clone "$tap" "$work/tap" -- --quiet
+mkdir -p "$work/tap/Casks"
+cat > "$work/tap/Casks/eighty.rb" <<CASK
 cask "eighty" do
   version "$version"
   sha256 "$sha"
@@ -70,7 +71,11 @@ cask "eighty" do
   EOS
 end
 CASK
-git -C "$work" add Casks/eighty.rb
-git -C "$work" commit --quiet -m "eighty $version"
-git -C "$work" push --quiet
+git -C "$work/tap" add Casks/eighty.rb
+if git -C "$work/tap" diff --cached --quiet; then
+  echo "The tap already has $tag."
+  exit 0
+fi
+git -C "$work/tap" commit --quiet -m "eighty $version"
+git -C "$work/tap" push --quiet
 echo "Released $tag; brew install --cask nathancolosimo/tap/eighty now installs it."
