@@ -7,6 +7,8 @@ public enum Paths {
   public static let label = "dev.eighty"
   /// The menu bar app's CFBundleIdentifier, set in scripts/build-app.sh.
   public static let appBundleID = "dev.eighty.menubar"
+  /// Where Homebrew installs the app; the daemon updates itself from it.
+  public static let appBundle = "/Applications/Eighty.app"
   /// Root-owned copy of the CLI that launchd runs, so the daemon never runs a
   /// binary a normal user could replace.
   public static let daemonBinary = "/Library/PrivilegedHelperTools/\(label)"
@@ -69,14 +71,7 @@ public func applyNativeLimit(_ target: Int) throws(SystemError) {
 /// Targets powerd is enforcing right now. The agent can accept a new target a
 /// few minutes before powerd registers it.
 public func registeredLimits() -> [Int] {
-  let pipe = Pipe()
-  let process = Process()
-  process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
-  process.arguments = ["-g", "battlimit"]
-  process.standardOutput = pipe
-  guard (try? process.run()) != nil else { return [] }
-  let output = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-  process.waitUntilExit()
+  guard let output = output(of: "/usr/bin/pmset", "-g", "battlimit") else { return [] }
   return output.split(separator: "}").compactMap { row in
     guard row.contains("Terminated = 0"), let match = row.firstMatch(of: /chargeSocLimitSoc = (\d+)/) else { return nil }
     return Int(match.1)
@@ -86,4 +81,17 @@ public func registeredLimits() -> [Int] {
 public func loadConfig() throws -> Config {
   guard let data = FileManager.default.contents(atPath: Paths.config) else { return .standard }
   return try Config.decode(data)
+}
+
+/// Runs a program and returns its trimmed standard output, or nil if it can't start.
+public func output(of executable: String, _ arguments: String...) -> String? {
+  let pipe = Pipe()
+  let process = Process()
+  process.executableURL = URL(fileURLWithPath: executable)
+  process.arguments = arguments
+  process.standardOutput = pipe
+  guard (try? process.run()) != nil else { return nil }
+  let data = pipe.fileHandleForReading.readDataToEndOfFile()
+  process.waitUntilExit()
+  return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
 }

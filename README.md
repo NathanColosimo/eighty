@@ -48,6 +48,9 @@ brew install --cask nathancolosimo/tap/eighty
 
 That's it. Eighty starts with your Mac from then on.
 
+To update: `brew upgrade --cask eighty`. The background service updates itself
+within a minute, with no password.
+
 ## Use
 
 Click the menu bar icon to:

@@ -27,8 +27,9 @@ public enum Health: Equatable, Sendable {
     guard FileManager.default.fileExists(atPath: Paths.plist) else { return .notInstalled }
     let last = History.lastRow()
     let lastDate = last.flatMap { ISO8601DateFormatter().date(from: $0.time) }
-    // A successful sample after the error means the daemon recovered.
-    if let error = lastError(), error.date > (lastDate ?? .distantPast) {
+    // A sample after the error means the daemon recovered. Samples carry whole
+    // seconds, so an error earlier in the same second as a sample doesn't count.
+    if let error = lastError(), error.date.timeIntervalSince(lastDate ?? .distantPast) >= 1 {
       return .failing(error.message)
     }
     guard let lastDate, now.timeIntervalSince(lastDate) < staleAfter else {

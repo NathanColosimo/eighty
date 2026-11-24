@@ -64,11 +64,13 @@ struct Panel: View {
         title: "One more step",
         detail: "Eighty needs a small background service to control charging. macOS will ask for your password once.",
         action: "Install Background Service")
-    case .outdated:
+    case .outdated where model.needsManualUpdate:
       setupCard(
         title: "Update the background service",
         detail: "It doesn't match this version of Eighty (\(eightyVersion)). macOS will ask for your password.",
         action: "Update Background Service")
+    case .outdated:
+      EmptyView()
     }
   }
 
