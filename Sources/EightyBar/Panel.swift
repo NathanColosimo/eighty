@@ -158,6 +158,10 @@ struct Panel: View {
         .toggleStyle(.checkbox)
         .controlSize(.small)
       Spacer()
+      Text("v\(eightyVersion)")
+        .font(.caption)
+        .foregroundStyle(.tertiary)
+        .monospacedDigit()
       Button("Quit") { NSApp.terminate(nil) }
         .controlSize(.small)
     }

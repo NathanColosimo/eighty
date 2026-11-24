@@ -91,7 +91,7 @@ let overview = """
 
   \(commands.map { "  \($0.usage.padding(toLength: 34, withPad: " ", startingAt: 0))\($0.summary)" }.joined(separator: "\n"))
 
-  Run `eighty help <command>` for details. `eighty version` prints the version.
+  Run `eighty help <command>` for details. `eighty -v` prints the version.
 
   For scripts and agents:
     - Exit code 0 on success, 1 on error; errors go to stderr.
@@ -111,7 +111,7 @@ let rest = arguments.dropFirst()
 
 switch arguments.first {
 case nil, "help", "-h", "--help": help(rest)
-case "version", "--version": print(eightyVersion)
+case "version", "--version", "-v": print(eightyVersion)
 case "daemon": runDaemon()
 case let name?:
   guard let command = commands.first(where: { $0.name == name }) else { fail("unknown command \(name). Run: eighty help") }
