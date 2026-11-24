@@ -5,6 +5,8 @@ import IOKit.ps
 
 public enum Paths {
   public static let label = "dev.eighty"
+  /// The menu bar app's CFBundleIdentifier, set in scripts/build-app.sh.
+  public static let appBundleID = "dev.eighty.menubar"
   /// Root-owned copy of the CLI that launchd runs, so the daemon never runs a
   /// binary a normal user could replace.
   public static let daemonBinary = "/Library/PrivilegedHelperTools/\(label)"

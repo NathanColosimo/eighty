@@ -28,6 +28,8 @@ func install() {
       "KeepAlive": true,
       "ProcessType": "Background",
       "StandardErrorPath": Paths.errors,
+      // Lists the service under the Eighty app in System Settings → Login Items.
+      "AssociatedBundleIdentifiers": [Paths.appBundleID],
     ]
     let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
     try data.write(to: URL(fileURLWithPath: Paths.plist))
