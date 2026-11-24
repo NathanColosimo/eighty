@@ -47,12 +47,13 @@ cask "eighty" do
   end
 
   depends_on arch: :arm64
-  depends_on macos: ">= :$MIN_MACOS_NAME"
+  depends_on macos: :$MIN_MACOS_NAME # this macOS or later
 
   app "Eighty.app"
   binary "#{appdir}/Eighty.app/Contents/Helpers/eighty"
 
   # The app is ad-hoc signed, not notarized, so clear the download quarantine.
+  # The declarative postflight_steps that brew style prefers have no xattr step.
   postflight do
     system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/Eighty.app"]
   end
