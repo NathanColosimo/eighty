@@ -78,7 +78,6 @@ text(x0 + plot_w2 * 600 / max_cycles, 400 + 2 * 98 + 56 + 30, "Eighty’s defaul
 
 # Footer
 out.append(f'<line x1="80" y1="815" x2="{W - 80}" y2="815" stroke="{GRID}" stroke-width="1"/>')
-text(80, 855, "Data: Battery University BU-808, Tables 3 and 4. Estimates for typical Li-ion cells; real batteries vary.", 20, INK_3)
 text(W - 80, 855, "github.com/NathanColosimo/eighty", 20, INK_2, weight=600, anchor="end")
 
 svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
