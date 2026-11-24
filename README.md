@@ -11,6 +11,8 @@
 
 <p align="center">
   <img src="docs/battery-wear.png" alt="Heat and charging to 100% are what wear out a plugged-in battery. Eighty stops charging at 80% and pauses charging while the battery is hot.">
+  <br>
+  <sub>Numbers: <a href="https://batteryuniversity.com/article/bu-808-how-to-prolong-lithium-based-batteries">Battery University BU-808</a>, tables 3 and 4. Estimates for typical Li-ion cells; real batteries vary.</sub>
 </p>
 
 ## Why
