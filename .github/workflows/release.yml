@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: xcode-27
+    timeout-minutes: 30
+    permissions:
+      contents: write # create the release
+      id-token: write # sign the build provenance
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the tag matches the version
+        run: |
+          version=$(sed -n 's/.*eightyVersion = "\(.*\)"/\1/p' Sources/EightyKit/Version.swift)
+          test "v$version" = "$GITHUB_REF_NAME"
+      - run: swift test
+      - run: scripts/build-app.sh --zip
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: .build/Eighty-*.zip
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          . scripts/release.env
+          gh release create "$GITHUB_REF_NAME" .build/Eighty-*.zip \
+            --title "Eighty ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --notes "Requires macOS $MIN_MACOS or later on Apple silicon. Install: \`brew install --cask nathancolosimo/tap/eighty\`"
