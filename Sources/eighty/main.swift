@@ -20,8 +20,8 @@ let commands: [Command] = [
         limit         charge limit in percent (100 = off)
         heat          pause and resume temperatures in °C, or off
         macOS target  the limit macOS has loaded; "enforcing" is what it applies now
-        daemon        installed or not, limiting or paused for heat, last sample time
-        health        OK, or what is wrong: not installed, not responding, or an error
+        daemon        on (installed) or off, limiting or paused for heat, last sample time
+        health        OK, or what is wrong: off, not responding, or an error
 
       --json prints one object. Missing values are null:
         {"battery": {"percent": 79, "charging": true, "temperatureC": 31.2},

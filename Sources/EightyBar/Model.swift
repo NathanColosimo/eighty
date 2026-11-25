@@ -39,9 +39,9 @@ final class Model {
   /// Registers the daemon. The first time, macOS asks the user to allow it in
   /// System Settings, so this opens that page.
   func turnOnService() {
+    error = nil
     do {
       try service.register()
-      error = nil
     } catch {
       if service.status != .requiresApproval {
         self.error = "Could not turn on the background service: \(error.localizedDescription)"

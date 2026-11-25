@@ -87,7 +87,8 @@ brew uninstall --zap --cask eighty
 
 A small background service runs as root, wakes once a minute, and sets macOS's own
 charge limit. It runs from inside the app, registered with macOS's `SMAppService`,
-so it upgrades with the app and you can turn it off in System Settings → Login Items. When the battery is charging and hot, it sets the limit to the
+so it upgrades with the app. Turn it off in System Settings → General → Login
+Items & Extensions. When the battery is charging and hot, it sets the limit to the
 current percentage so charging stops, then restores it once the battery cools.
 Releases are signed and notarized by Apple.
 

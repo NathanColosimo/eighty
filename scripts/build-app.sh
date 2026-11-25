@@ -60,7 +60,6 @@ cat > "$app/Contents/Library/LaunchDaemons/dev.eighty.daemon.plist" <<PLIST
   <key>Label</key><string>dev.eighty.daemon</string>
   <key>BundleProgram</key><string>Contents/Helpers/eighty</string>
   <key>ProgramArguments</key><array><string>eighty</string><string>daemon</string></array>
-  <key>AssociatedBundleIdentifiers</key><array><string>dev.eighty.menubar</string></array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
   <key>ProcessType</key><string>Background</string>
