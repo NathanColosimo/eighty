@@ -52,24 +52,23 @@ cask "eighty" do
   app "Eighty.app"
   binary "#{appdir}/Eighty.app/Contents/Helpers/eighty"
 
-  # Homebrew runs uninstall directives on every upgrade too, so the background
-  # service (its own root-owned copy, unaffected by upgrades) is removed only by
-  # zap. After an upgrade the app offers to update the service.
+  # Homebrew runs uninstall directives on every upgrade too, so they only quit
+  # the app. The background service runs from inside the app, so an upgrade
+  # restarts it on the new version. Zap stops it and removes its files.
   uninstall quit: "dev.eighty.menubar"
 
-  zap script: {
-        executable:   "/Library/PrivilegedHelperTools/dev.eighty",
-        args:         ["uninstall"],
-        sudo:         true,
-        must_succeed: false,
-      },
-      trash:  "~/Library/Preferences/dev.eighty.menubar.plist"
+  zap launchctl: "dev.eighty.daemon",
+      delete:    [
+        "/Library/Application Support/eighty",
+        "/Library/Logs/eighty",
+      ],
+      trash:     "~/Library/Preferences/dev.eighty.menubar.plist"
 
   caveats <<~EOS
-    Open Eighty from Applications, then click its menu bar icon and choose
-    "Install Background Service". Or, from a terminal: sudo eighty install
+    Open Eighty from Applications, click its menu bar icon, choose
+    "Turn On Background Service", and allow Eighty in System Settings.
 
-    To remove the background service when uninstalling, use:
+    To also remove its settings and logs when uninstalling, use:
       brew uninstall --zap --cask eighty
   EOS
 end

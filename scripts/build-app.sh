@@ -16,7 +16,7 @@ swift build -c release --product eighty
 
 app=.build/Eighty.app
 rm -rf "$app"
-mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Helpers" "$app/Contents/Resources" "$app/Contents/Library/LaunchDaemons"
 cp .build/release/EightyBar "$app/Contents/MacOS/Eighty"
 cp .build/release/eighty "$app/Contents/Helpers/eighty"
 
@@ -45,6 +45,25 @@ cat > "$app/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>$version</string>
   <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
   <key>LSUIElement</key><true/>
+</dict>
+</plist>
+PLIST
+
+# The background service, which the app registers with SMAppService. launchd
+# runs the CLI from inside the app, so it needs no copy and upgrades with it.
+# Paths.daemonLabel in Sources/EightyKit/System.swift names it.
+cat > "$app/Contents/Library/LaunchDaemons/dev.eighty.daemon.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>dev.eighty.daemon</string>
+  <key>BundleProgram</key><string>Contents/Helpers/eighty</string>
+  <key>ProgramArguments</key><array><string>eighty</string><string>daemon</string></array>
+  <key>AssociatedBundleIdentifiers</key><array><string>dev.eighty.menubar</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ProcessType</key><string>Background</string>
 </dict>
 </plist>
 PLIST

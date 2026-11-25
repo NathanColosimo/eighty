@@ -62,8 +62,8 @@ extension Mode {
   }
 }
 
-/// The daemon's error log. The daemon writes to standard error, which launchd
-/// sends to `Paths.errors`; the health check reads the newest line back.
+/// The daemon's error log. The daemon writes to standard error, which it points
+/// at `Paths.errors`; the health check reads the newest line back.
 public enum ErrorLog {
   public static func write(_ message: String) {
     FileHandle.standardError.write(Data(line(message, date: Date()).utf8))

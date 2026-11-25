@@ -36,9 +36,9 @@ Requires an Apple silicon MacBook on macOS 27 or later.
 brew install --cask nathancolosimo/tap/eighty
 ```
 
-Open **Eighty**, click the shield in the menu bar, then **Install Background Service**.
-macOS asks for your password once. To update, run `brew upgrade --cask eighty`;
-the background service updates itself.
+Open **Eighty**, click the shield in the menu bar, then **Turn On Background Service**,
+and allow Eighty in the System Settings page that opens. To update, run
+`brew upgrade --cask eighty`; the background service restarts on the new version.
 
 ## Use
 
@@ -55,10 +55,10 @@ Going on a trip? Click **Full** to charge to 100%, and **80%** when you're back.
 
 ## For AI agents and scripts
 
-The `eighty` command does everything the app does. No sudo except `install` and `uninstall`.
+The `eighty` command reads and changes everything the app does, without sudo. Only
+turning on the background service needs the app, because macOS asks a person to allow it.
 
 ```sh
-sudo eighty install      # once, if the app hasn't installed the service
 eighty status --json     # state as JSON; "problem" is null when healthy
 eighty limit 80          # 10-100, 100 = no limit
 eighty heat 35 32        # pause at 35 °C, resume at 32 °C (or: eighty heat off)
@@ -86,7 +86,8 @@ brew uninstall --zap --cask eighty
 ## How it works
 
 A small background service runs as root, wakes once a minute, and sets macOS's own
-charge limit. When the battery is charging and hot, it sets the limit to the
+charge limit. It runs from inside the app, registered with macOS's `SMAppService`,
+so it upgrades with the app and you can turn it off in System Settings → Login Items. When the battery is charging and hot, it sets the limit to the
 current percentage so charging stops, then restores it once the battery cools.
 Releases are signed and notarized by Apple.
 

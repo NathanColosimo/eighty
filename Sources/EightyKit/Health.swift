@@ -4,7 +4,7 @@ import Foundation
 /// so the CLI and menu bar app can check it without root.
 public enum Health: Equatable, Sendable {
   case ok
-  case notInstalled
+  case off
   /// No sample for a few minutes: the daemon is stopped or stuck.
   case notResponding(lastSample: String?)
   /// The daemon's latest attempt failed, for example macOS refused the target.
@@ -16,16 +16,17 @@ public enum Health: Equatable, Sendable {
   public var problem: String? {
     switch self {
     case .ok: nil
-    case .notInstalled: "The background service is not installed."
+    case .off: "The background service is off. Turn it on from the Eighty menu bar app."
     case .notResponding(let last?): "The background service isn't responding (last sample \(last))."
     case .notResponding(nil): "The background service isn't responding (no samples yet)."
     case .failing(let message): "The background service hit an error: \(message)"
     }
   }
 
-  public static func check() -> Health {
+  /// `serviceOn`: the daemon is registered and allowed to run.
+  public static func check(serviceOn: Bool) -> Health {
     evaluate(
-      installed: FileManager.default.fileExists(atPath: Paths.plist),
+      serviceOn: serviceOn,
       lastSample: History.lastRow(), lastError: ErrorLog.last(), lastWake: lastWake(), now: Date())
   }
 
@@ -37,8 +38,8 @@ public enum Health: Equatable, Sendable {
     return Date(timeIntervalSince1970: TimeInterval(time.tv_sec))
   }
 
-  static func evaluate(installed: Bool, lastSample: History.Row?, lastError: (date: Date, message: String)?, lastWake: Date, now: Date) -> Health {
-    guard installed else { return .notInstalled }
+  static func evaluate(serviceOn: Bool, lastSample: History.Row?, lastError: (date: Date, message: String)?, lastWake: Date, now: Date) -> Health {
+    guard serviceOn else { return .off }
     let sampled = lastSample.flatMap { ISO8601DateFormatter().date(from: $0.time) }
     // A sample after the error means the daemon recovered. Samples carry whole
     // seconds, so an error earlier in the same second as a sample doesn't count.
