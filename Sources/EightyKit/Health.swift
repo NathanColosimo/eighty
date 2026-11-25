@@ -26,10 +26,18 @@ public enum Health: Equatable, Sendable {
   public static func check() -> Health {
     evaluate(
       installed: FileManager.default.fileExists(atPath: Paths.plist),
-      lastSample: History.lastRow(), lastError: ErrorLog.last(), now: Date())
+      lastSample: History.lastRow(), lastError: ErrorLog.last(), lastWake: lastWake(), now: Date())
   }
 
-  static func evaluate(installed: Bool, lastSample: History.Row?, lastError: (date: Date, message: String)?, now: Date) -> Health {
+  /// When the Mac last woke from sleep; the epoch if it hasn't slept since boot.
+  private static func lastWake() -> Date {
+    var time = timeval()
+    var size = MemoryLayout<timeval>.size
+    guard sysctlbyname("kern.waketime", &time, &size, nil, 0) == 0 else { return .distantPast }
+    return Date(timeIntervalSince1970: TimeInterval(time.tv_sec))
+  }
+
+  static func evaluate(installed: Bool, lastSample: History.Row?, lastError: (date: Date, message: String)?, lastWake: Date, now: Date) -> Health {
     guard installed else { return .notInstalled }
     let sampled = lastSample.flatMap { ISO8601DateFormatter().date(from: $0.time) }
     // A sample after the error means the daemon recovered. Samples carry whole
@@ -37,7 +45,8 @@ public enum Health: Equatable, Sendable {
     if let lastError, lastError.date.timeIntervalSince(sampled ?? .distantPast) >= 1 {
       return .failing(lastError.message)
     }
-    guard let sampled, now.timeIntervalSince(sampled) < staleAfter else {
+    // The daemon can't sample while the Mac sleeps, so count from the wake.
+    guard let sampled, now.timeIntervalSince(max(sampled, lastWake)) < staleAfter else {
       return .notResponding(lastSample: lastSample?.time)
     }
     return .ok
