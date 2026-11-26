@@ -1,6 +1,7 @@
 import AppKit
 import EightyCore
 import EightyKit
+import ServiceManagement
 import SwiftUI
 
 struct Panel: View {
@@ -51,29 +52,34 @@ struct Panel: View {
   }
 
   @ViewBuilder private var setup: some View {
-    if model.health == .notInstalled {
+    switch model.serviceStatus {
+    case .enabled:
+      if let problem = model.health.problem {
+        setupCard(
+          title: "Eighty isn't working", detail: problem, action: "Open Login Items", tint: .red,
+          perform: SMAppService.openSystemSettingsLoginItems)
+      }
+    case .requiresApproval:
+      setupCard(
+        title: "Allow Eighty in System Settings",
+        detail: "Turn on Eighty under Login Items & Extensions, so its background service can control charging.",
+        action: "Open System Settings", perform: SMAppService.openSystemSettingsLoginItems)
+    default:
       setupCard(
         title: "One more step",
-        detail: "Eighty needs a small background service to control charging. macOS will ask for your password once.",
-        action: "Install Background Service")
-    } else if model.needsManualUpdate {
-      setupCard(
-        title: "Update the background service",
-        detail: "It doesn't match this version of Eighty (\(eightyVersion)). macOS will ask for your password.",
-        action: "Update Background Service")
-    } else if let problem = model.health.problem {
-      setupCard(title: "Eighty isn't working", detail: problem, action: "Restart Background Service", tint: .red)
+        detail: "Eighty needs a small background service to control charging. macOS will ask you to allow it once.",
+        action: "Turn On Background Service", perform: model.turnOnService)
     }
   }
 
-  private func setupCard(title: String, detail: String, action: String, tint: Color = .accentColor) -> some View {
+  private func setupCard(title: String, detail: String, action: String, tint: Color = .accentColor, perform: @escaping () -> Void) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       Text(title).font(.subheadline.weight(.semibold))
       Text(detail)
         .font(.caption)
         .foregroundStyle(.secondary)
         .fixedSize(horizontal: false, vertical: true)
-      Button(action, action: model.installDaemon)
+      Button(action, action: perform)
         .buttonStyle(.borderedProminent)
         .tint(tint)
         .controlSize(.regular)

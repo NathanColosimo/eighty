@@ -10,14 +10,11 @@ final class Model {
   private(set) var config = Config.standard
   private(set) var mode = Mode.limiting
   private(set) var health = Health.ok
-  /// The installed daemon's version, nil when it can't be read.
-  private(set) var daemonVersion: String?
+  private(set) var serviceStatus = SMAppService.Status.notRegistered
   private(set) var error: String?
 
-  /// When the daemon was first seen out of date. A signed daemon updates itself
-  /// within about a minute of an upgrade, so the app only asks after a grace period.
-  private var outdatedSince: Date?
-
+  /// The daemon, run by launchd from this app's bundle.
+  private let service = SMAppService.daemon(plistName: "\(Paths.daemonLabel).plist")
   private var timer: Timer?
 
   init() {
@@ -35,39 +32,25 @@ final class Model {
       self.error = "Settings file is invalid: \(error)"
     }
     mode = History.lastRow()?.mode ?? .limiting
-    health = Health.check()
-    // Reading the version starts a process, so only until it matches this app.
-    if daemonVersion != eightyVersion {
-      daemonVersion = output(of: Paths.daemonBinary, "version")
-      outdatedSince = daemonVersion == eightyVersion ? nil : outdatedSince ?? Date()
-    }
+    serviceStatus = service.status
+    health = Health.check(serviceOn: serviceStatus == .enabled)
   }
 
-  /// Runs the bundled CLI's `install` as root, behind the standard macOS password dialog.
-  func installDaemon() {
-    let cli = Bundle.main.bundleURL.appending(path: "Contents/Helpers/eighty").path
-    guard FileManager.default.isExecutableFile(atPath: cli) else {
-      error = "The eighty command is missing from this app. Reinstall Eighty."
-      return
+  /// Registers the daemon. The first time, macOS asks the user to allow it in
+  /// System Settings, so this opens that page.
+  func turnOnService() {
+    error = nil
+    do {
+      try service.register()
+    } catch {
+      if service.status != .requiresApproval {
+        self.error = "Could not turn on the background service: \(error.localizedDescription)"
+      }
     }
-    let quoted = cli.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
-    let source = "do shell script quoted form of \"\(quoted)\" & \" install\" with administrator privileges"
-    var failure: NSDictionary?
-    NSAppleScript(source: source)?.executeAndReturnError(&failure)
-    let userCancelled = -128
-    if let failure, failure[NSAppleScript.errorNumber] as? Int != userCancelled {
-      error = "Install failed: \(failure[NSAppleScript.errorMessage] as? String ?? "unknown error")"
-    } else if failure == nil {
-      error = nil
+    if service.status == .requiresApproval {
+      SMAppService.openSystemSettingsLoginItems()
     }
     refresh()
-  }
-
-  /// The daemon is installed but out of date, and hasn't updated itself within a
-  /// few minutes (an unsigned build, or one from before self-update).
-  var needsManualUpdate: Bool {
-    guard health != .notInstalled, daemonVersion != eightyVersion, let outdatedSince else { return false }
-    return Date().timeIntervalSince(outdatedSince) > 180
   }
 
   /// The percentage charging stops at right now.
@@ -96,7 +79,7 @@ final class Model {
     } catch let invalid as Config.Invalid {
       error = invalid.description
     } catch {
-      self.error = "Could not save settings. Install the background service first."
+      self.error = "Could not save settings. Turn on the background service first."
     }
   }
 

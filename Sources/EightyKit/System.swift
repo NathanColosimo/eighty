@@ -4,22 +4,16 @@ import Foundation
 import IOKit.ps
 
 public enum Paths {
-  public static let label = "dev.eighty"
-  /// The menu bar app's CFBundleIdentifier, set in scripts/build-app.sh.
-  public static let appBundleID = "dev.eighty.menubar"
-  /// Where Homebrew installs the app; the daemon updates itself from it.
-  public static let appBundle = "/Applications/Eighty.app"
-  /// Root-owned copy of the CLI that launchd runs, so the daemon never runs a
-  /// binary a normal user could replace.
-  public static let daemonBinary = "/Library/PrivilegedHelperTools/\(label)"
-  public static let plist = "/Library/LaunchDaemons/\(label).plist"
+  /// The daemon's launchd job. scripts/build-app.sh writes its plist into
+  /// Eighty.app/Contents/Library/LaunchDaemons as `\(daemonLabel).plist`.
+  public static let daemonLabel = "dev.eighty.daemon"
   public static let supportDir = "/Library/Application Support/eighty"
   public static let config = "\(supportDir)/config.json"
   public static let logDir = "/Library/Logs/eighty"
   public static let history = "\(logDir)/history.csv"
   public static let errors = "\(logDir)/errors.log"
   /// Posted after the config changes, so the daemon reacts at once.
-  public static let configChanged = "\(label).config-changed"
+  public static let configChanged = "dev.eighty.config-changed"
 }
 
 public struct SystemError: Error, CustomStringConvertible {

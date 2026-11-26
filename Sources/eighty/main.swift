@@ -20,8 +20,8 @@ let commands: [Command] = [
         limit         charge limit in percent (100 = off)
         heat          pause and resume temperatures in °C, or off
         macOS target  the limit macOS has loaded; "enforcing" is what it applies now
-        daemon        installed or not, limiting or paused for heat, last sample time
-        health        OK, or what is wrong: not installed, not responding, or an error
+        daemon        on (installed) or off, limiting or paused for heat, last sample time
+        health        OK, or what is wrong: off, not responding, or an error
 
       --json prints one object. Missing values are null:
         {"battery": {"percent": 79, "charging": true, "temperatureC": 31.2},
@@ -64,25 +64,6 @@ let commands: [Command] = [
       Example: eighty history 60
       """,
     run: history),
-  Command(
-    name: "install", usage: "install",
-    summary: "Install and start the background daemon (needs sudo)",
-    details: """
-      Copies this binary to \(Paths.daemonBinary) and starts a launchd daemon that
-      runs at boot. Settings are kept. Signed releases then update themselves after
-      `brew upgrade`. The menu bar app has a button that does the same.
-      Example: sudo eighty install
-      """,
-    run: { _ in install() }),
-  Command(
-    name: "uninstall", usage: "uninstall",
-    summary: "Stop and remove everything (needs sudo)",
-    details: """
-      Removes the daemon, binary, settings, and logs. macOS keeps the plain charge
-      limit (without any heat pause); change it in System Settings → Battery.
-      Example: sudo eighty uninstall
-      """,
-    run: { _ in uninstall() }),
 ]
 
 let overview = """
@@ -97,7 +78,8 @@ let overview = """
   For scripts and agents:
     - Exit code 0 on success, 1 on error; errors go to stderr.
     - Use `eighty status --json` to read state; `history` prints CSV.
-    - Only install and uninstall need sudo. Setting changes apply within seconds.
+    - No command needs sudo. Setting changes apply within seconds.
+    - The background service is turned on from the Eighty menu bar app.
     - Settings: \(Paths.config)
   """
 
@@ -125,8 +107,8 @@ func status(_ rest: ArraySlice<String>) {
   let reading = try? readBattery()
   let native = Result { () throws(SystemError) in try readNativeLimit() }
   let enforcing = Set(registeredLimits()).sorted()
-  let installed = FileManager.default.fileExists(atPath: Paths.plist)
-  let health = Health.check()
+  let installed = serviceIsLoaded()
+  let health = Health.check(serviceOn: installed)
   let last = History.lastRow()
 
   if rest.first == "--json" {
@@ -161,7 +143,19 @@ func status(_ rest: ArraySlice<String>) {
   let enforced = enforcing.isEmpty ? "none" : enforcing.map { "\($0)%" }.joined(separator: ", ")
   print("macOS target: \(target) (enforcing: \(enforced))")
   let state = last.map { "\($0.mode.isHeatPause ? "paused for heat" : "limiting"), last sample \($0.time)" } ?? "no samples yet"
-  print("Daemon:       \(installed ? "installed, \(state)" : "not installed (sudo eighty install)")")
+  print("Daemon:       \(installed ? "installed, \(state)" : "off (turn it on from the Eighty menu bar app)")")
+}
+
+/// Whether launchd has the daemon's job. Only the app can ask SMAppService.
+func serviceIsLoaded() -> Bool {
+  let process = Process()
+  process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+  process.arguments = ["print", "system/\(Paths.daemonLabel)"]
+  process.standardOutput = FileHandle.nullDevice
+  process.standardError = FileHandle.nullDevice
+  guard (try? process.run()) != nil else { return false }
+  process.waitUntilExit()
+  return process.terminationStatus == 0
 }
 
 func setLimit(_ rest: ArraySlice<String>) {
@@ -191,7 +185,7 @@ func updateConfig(_ change: (inout Config) -> Void) {
   } catch let error as Config.Invalid {
     fail(error.description)
   } catch {
-    fail("cannot save settings (is eighty installed? sudo eighty install): \(error.localizedDescription)")
+    fail("cannot save settings (is the background service on? Turn it on from the Eighty menu bar app): \(error.localizedDescription)")
   }
 }
 

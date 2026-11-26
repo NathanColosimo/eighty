@@ -14,11 +14,9 @@
      [NathanColosimo/homebrew-tap](https://github.com/NathanColosimo/homebrew-tap)
      with the new version, checksum, and minimum macOS.
 
-Users then get it with `brew upgrade --cask eighty`. Within a minute the running
-background service sees the newer app, checks its `eighty` is signed by the same
-Developer ID team and newer, and swaps itself for it (`Sources/eighty/SelfUpdate.swift`).
-If that can't happen (an unsigned build, or a service older than 0.1.4), the app
-shows "Update Background Service" after three minutes.
+Users then get it with `brew upgrade --cask eighty`. The background service runs
+from inside the app, so within a minute it sees its binary was replaced, exits, and
+launchd starts the new one (`Sources/eighty/Daemon.swift`).
 
 Check a downloaded zip came from this repo's workflow:
 `gh attestation verify Eighty-<version>.zip --repo NathanColosimo/eighty`
