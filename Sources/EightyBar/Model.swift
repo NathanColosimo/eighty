@@ -53,12 +53,6 @@ final class Model {
     refresh()
   }
 
-  /// Registering again starts a fresh daemon. Once allowed, this asks for nothing.
-  func restartService() {
-    try? service.unregister()
-    turnOnService()
-  }
-
   /// The percentage charging stops at right now.
   var target: Int { chargeTarget(config: config, mode: mode) }
 

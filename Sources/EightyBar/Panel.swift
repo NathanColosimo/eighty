@@ -55,7 +55,9 @@ struct Panel: View {
     switch model.serviceStatus {
     case .enabled:
       if let problem = model.health.problem {
-        setupCard(title: "Eighty isn't working", detail: problem, action: "Restart Background Service", tint: .red, perform: model.restartService)
+        setupCard(
+          title: "Eighty isn't working", detail: problem, action: "Open Login Items", tint: .red,
+          perform: SMAppService.openSystemSettingsLoginItems)
       }
     case .requiresApproval:
       setupCard(
