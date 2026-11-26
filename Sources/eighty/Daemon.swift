@@ -29,8 +29,6 @@ func runDaemon() -> Never {
   }
   termination.resume()
 
-  removeLegacyService()
-
   // `brew upgrade` replaces the app. Exit, and launchd starts the new binary.
   let executable = Bundle.main.executableURL!.path  // always set for a running executable
   let startedFrom = fileNumber(executable)
@@ -76,20 +74,6 @@ private func prepareFiles() throws {
   try manager.setAttributes([.posixPermissions: 0o664, .groupOwnerAccountName: "admin"], ofItemAtPath: Paths.config)
   try manager.createDirectory(atPath: Paths.logDir, withIntermediateDirectories: true)
   guard freopen(Paths.errors, "a", stderr) != nil else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
-}
-
-/// Before 0.1.7, `sudo eighty install` ran the daemon as a plain launchd job,
-/// from a copy of the CLI. Remove it. Those versions update themselves to this
-/// code, so the old job usually runs this and stops itself; the app then asks
-/// to turn on the new service.
-private func removeLegacyService() {
-  let plist = "/Library/LaunchDaemons/dev.eighty.plist"
-  guard FileManager.default.fileExists(atPath: plist) else { return }
-  for path in [plist, "/Library/PrivilegedHelperTools/dev.eighty", "/Library/PrivilegedHelperTools/dev.eighty.new"] {
-    try? FileManager.default.removeItem(atPath: path)
-  }
-  // Not waited for: when this is the old job, launchd sends SIGTERM, which the main queue must handle.
-  _ = try? Process.run(URL(fileURLWithPath: "/bin/launchctl"), arguments: ["bootout", "system/dev.eighty"])
 }
 
 private func fileNumber(_ path: String) -> Int? {
