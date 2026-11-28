@@ -70,7 +70,9 @@ final class Model {
   }
 
   private func update(_ change: (inout Config) -> Void) {
-    var next = config
+    // From the file, not `config`: the CLI may have changed it since the last
+    // refresh. If it's invalid, refresh shows why.
+    guard var next = try? loadConfig() else { return refresh() }
     change(&next)
     do {
       try saveConfig(next)

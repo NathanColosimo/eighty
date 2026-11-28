@@ -28,13 +28,15 @@ public struct Config: Codable, Equatable, Sendable {
 
   public enum Invalid: Error, Equatable, CustomStringConvertible {
     case limit(Int)
-    case temperature(Double)
+    case pauseTemperature(Double)
+    case resumeTemperature(Double)
     case resumeNotBelowPause
 
     public var description: String {
       switch self {
       case .limit(let value): "limit must be 10-100, got \(value)"
-      case .temperature(let value): "temperature must be 25-50 °C, got \(value)"
+      case .pauseTemperature(let value): "pause temperature must be 25-50 °C, got \(value.formatted())"
+      case .resumeTemperature(let value): "resume temperature must be 25-50 °C, got \(value.formatted())"
       case .resumeNotBelowPause: "resume temperature must be below the pause temperature"
       }
     }
@@ -43,9 +45,8 @@ public struct Config: Codable, Equatable, Sendable {
   public func validated() throws(Invalid) -> Config {
     guard (10...100).contains(limit) else { throw .limit(limit) }
     if let heat {
-      for value in [heat.pauseAt, heat.resumeAt] where !(25...50).contains(value) {
-        throw .temperature(value)
-      }
+      guard (25...50).contains(heat.pauseAt) else { throw .pauseTemperature(heat.pauseAt) }
+      guard (25...50).contains(heat.resumeAt) else { throw .resumeTemperature(heat.resumeAt) }
       guard heat.resumeAt < heat.pauseAt else { throw .resumeNotBelowPause }
     }
     return self

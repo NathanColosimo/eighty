@@ -3,7 +3,7 @@
 #   1. tags it and pushes the tag, which makes the Release workflow build
 #      Eighty-<version>.zip and attach it to a GitHub release;
 #   2. points the Homebrew cask in NathanColosimo/homebrew-tap at that zip.
-# Run from an up-to-date, clean main after the version bump has merged.
+# Run from a clean checkout of the latest origin/main after the version bump has merged.
 set -eu
 cd "$(dirname "$0")/.."
 . scripts/release.env
@@ -13,12 +13,11 @@ repo=NathanColosimo/eighty
 tap=NathanColosimo/homebrew-tap
 
 [ -z "$(git status --porcelain)" ] || { echo "Working tree is not clean." >&2; exit 1; }
-[ "$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "Release from main." >&2; exit 1; }
+git fetch --quiet origin main
+[ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "Check out the latest origin/main." >&2; exit 1; }
 
-if ! git rev-parse "$tag" >/dev/null 2>&1; then
-  git tag -a "$tag" -m "Eighty $version"
-  git push origin "$tag"
-fi
+git rev-parse --quiet --verify "refs/tags/$tag" >/dev/null || git tag -a "$tag" -m "Eighty $version"
+git push origin "$tag" # on every run, in case an earlier push failed
 
 echo "Waiting for the Release workflow to publish $tag..."
 until gh release view "$tag" --repo "$repo" --json assets --jq '.assets[].name' 2>/dev/null | grep -q "Eighty-$version.zip"; do

@@ -34,8 +34,15 @@ public enum History {
     return text.split(separator: "\n").dropFirst().map(String.init)
   }
 
+  /// Reads only the end of the file: the app checks this every 15 seconds, and
+  /// the whole file takes about 45 ms to read at the 5 MB rotation size.
   public static func lastRow() -> Row? {
-    lines().last.flatMap(parse)
+    guard let handle = FileHandle(forReadingAtPath: Paths.history) else { return nil }
+    defer { try? handle.close() }
+    guard let end = try? handle.seekToEnd() else { return nil }
+    try? handle.seek(toOffset: end - min(end, 256))
+    guard let tail = try? handle.readToEnd() else { return nil }
+    return String(decoding: tail, as: UTF8.self).split(separator: "\n").last.flatMap { parse(String($0)) }
   }
 
   static func line(reading: Reading, target: Int, mode: Mode, date: Date) -> String {
