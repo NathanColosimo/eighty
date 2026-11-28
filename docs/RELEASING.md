@@ -43,6 +43,6 @@ base64 -i developer-id.p12 | gh secret set MACOS_CERT_P12 --env release
 gh secret set MACOS_CERT_PASSWORD --env release
 ```
 
-To sign and notarize on a Mac instead: `EIGHTY_SIGN_IDENTITY="$DEVELOPER_ID"
-scripts/build-app.sh`, then `scripts/notarize.sh` with `NOTARY_KEY`,
-`NOTARY_KEY_ID`, and `NOTARY_ISSUER` set.
+To sign and notarize on a Mac instead: `. scripts/release.env &&
+EIGHTY_SIGN_IDENTITY="$DEVELOPER_ID" scripts/build-app.sh`, then
+`scripts/notarize.sh` with `NOTARY_KEY`, `NOTARY_KEY_ID`, and `NOTARY_ISSUER` set.

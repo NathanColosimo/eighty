@@ -24,13 +24,14 @@ public enum Mode: Equatable, Sendable {
 }
 
 /// Decides the next mode. Heat only matters while charging: a battery that is
-/// not charging gets no hotter from the charger.
+/// not charging gets no hotter from the charger. A pause follows the battery
+/// down, so one that drained while unplugged doesn't charge back up while hot.
 public func nextMode(config: Config, reading: Reading, mode: Mode) -> Mode {
   guard let heat = config.heat, let temperature = reading.temperature else { return .limiting }
 
   switch mode {
-  case .heatPaused:
-    return temperature <= heat.resumeAt ? .limiting : mode
+  case .heatPaused(let held):
+    return temperature <= heat.resumeAt ? .limiting : .heatPaused(at: min(held, reading.percent))
   case .limiting:
     let charging = reading.charging && reading.percent < config.limit
     return charging && temperature >= heat.pauseAt ? .heatPaused(at: reading.percent) : .limiting

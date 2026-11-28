@@ -28,8 +28,10 @@ private func check(_ body: (UnsafeMutablePointer<CChar>, Int32) -> Int32) throws
 }
 
 public func readBattery() throws(SystemError) -> Reading {
-  let info = IOPSCopyPowerSourcesInfo().takeRetainedValue()
-  let sources = IOPSCopyPowerSourcesList(info).takeRetainedValue() as [CFTypeRef]
+  guard
+    let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+    let sources = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef]
+  else { throw SystemError(description: "cannot read the power sources") }
   for source in sources {
     guard
       let description = IOPSGetPowerSourceDescription(info, source)?.takeUnretainedValue() as? [String: Any],

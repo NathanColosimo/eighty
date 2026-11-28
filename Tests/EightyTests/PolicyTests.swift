@@ -28,6 +28,11 @@ private func reading(_ percent: Int, charging: Bool = true, _ temperature: Doubl
   #expect(nextMode(config: config, reading: reading(63, charging: false, 33), mode: .heatPaused(at: 63)) == .heatPaused(at: 63))
 }
 
+@Test func pauseFollowsTheBatteryDown() {
+  // Unplugged while paused, the battery drains. Plugged back in while still hot, it must not charge back up.
+  #expect(nextMode(config: config, reading: reading(55, 36), mode: .heatPaused(at: 63)) == .heatPaused(at: 55))
+}
+
 @Test func pauseEndsOnceCool() {
   #expect(nextMode(config: config, reading: reading(63, charging: false, 32), mode: .heatPaused(at: 63)) == .limiting)
 }
@@ -55,7 +60,11 @@ private func reading(_ percent: Int, charging: Bool = true, _ temperature: Doubl
   #expect(throws: Config.Invalid.resumeNotBelowPause) {
     try Config(limit: 80, heat: .init(pauseAt: 35, resumeAt: 35)).validated()
   }
-  #expect(throws: Config.Invalid.temperature(70)) {
+  #expect(throws: Config.Invalid.pauseTemperature(70)) {
     try Config(limit: 80, heat: .init(pauseAt: 70, resumeAt: 30)).validated()
+  }
+  // `eighty heat 27` defaults resume to 24, so the error must name resume, not the 27 the user typed.
+  #expect(throws: Config.Invalid.resumeTemperature(24)) {
+    try Config(limit: 80, heat: .init(pauseAt: 27, resumeAt: 24)).validated()
   }
 }

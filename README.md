@@ -62,7 +62,7 @@ turning on the background service needs the app, because macOS asks a person to 
 eighty status --json     # state as JSON; "problem" is null when healthy
 eighty limit 80          # 10-100, 100 = no limit
 eighty heat 35 32        # pause at 35 °C, resume at 32 °C (or: eighty heat off)
-eighty history 60        # last hour, one CSV row per minute
+eighty history 60        # last 60 samples as CSV, about an hour
 eighty help [command]    # full reference
 ```
 
@@ -73,6 +73,9 @@ Exit code 0 on success, 1 on error (message on stderr).
 ```sh
 brew uninstall --zap --cask eighty
 ```
+
+macOS keeps the last charge limit Eighty set. Click **Full** first, or change it
+afterwards in System Settings → Battery.
 
 ## Good to know
 

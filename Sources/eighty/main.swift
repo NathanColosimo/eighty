@@ -103,7 +103,7 @@ case let name?:
 
 func status(_ rest: ArraySlice<String>) {
   guard rest.isEmpty || Array(rest) == ["--json"] else { fail("usage: eighty status [--json]") }
-  let config = (try? loadConfig()) ?? .standard
+  let config = savedConfig()
   let reading = try? readBattery()
   let native = Result { () throws(SystemError) in try readNativeLimit() }
   let enforcing = Set(registeredLimits()).sorted()
@@ -177,8 +177,18 @@ func setHeat(_ rest: ArraySlice<String>) {
   print("Heat pause at \(format(pause)) °C, resume at \(format(resume)) °C.")
 }
 
+/// Exits on an invalid file rather than showing defaults the daemon isn't
+/// using, or saving them over the user's other settings.
+func savedConfig() -> Config {
+  do {
+    return try loadConfig()
+  } catch {
+    fail("\(Paths.config) is invalid (\(error)). Fix it, or delete it to go back to the defaults.")
+  }
+}
+
 func updateConfig(_ change: (inout Config) -> Void) {
-  var config = (try? loadConfig()) ?? .standard
+  var config = savedConfig()
   change(&config)
   do {
     try saveConfig(config)
